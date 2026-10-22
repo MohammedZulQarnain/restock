@@ -1,0 +1,29 @@
+﻿# Rails secrets
+/backend/config/master.key
+/backend/config/credentials/*.key
+.env
+.env.*
+!.env.example
+
+# Dependencies
+/backend/vendor/bundle/
+/backend/vendor/ruby/
+/node_modules/
+
+# Logs and temporary files
+/backend/log/*
+!/backend/log/.keep
+/backend/tmp/*
+!/backend/tmp/.keep
+
+# Local storage and test output
+/backend/storage/*
+!/backend/storage/.keep
+/backend/coverage/
+/backend/spec/tmp/
+
+# Editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
