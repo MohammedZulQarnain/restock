@@ -23,4 +23,4 @@ The React UI presents overview metrics, products, return registration and receip
 
 ## Known gaps
 
-Authentication and role-based authorization, a full inspection/disposition UI, robust production security configuration, notifications, and deployment are not implemented yet. Do not deploy this MVP with real business data.
+Bearer-token authentication and basic role authorization are implemented. Remaining gaps include rate limiting, a security review, robust production configuration, notifications, Docker/deployment, and automated browser-level tests. Do not deploy this MVP with real business data.
