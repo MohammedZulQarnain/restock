@@ -32,3 +32,14 @@ end
 end
 
 puts "ReStock demo catalog and sample returns are ready."
+
+
+# Create the first administrator only when credentials are explicitly configured.
+if ENV["ADMIN_EMAIL"].present? && ENV["ADMIN_PASSWORD"].present?
+  admin = User.find_or_initialize_by(email: ENV.fetch("ADMIN_EMAIL").downcase.strip)
+  if admin.new_record?
+    admin.password = ENV.fetch("ADMIN_PASSWORD")
+    admin.role = "admin"
+    admin.save!
+  end
+end
