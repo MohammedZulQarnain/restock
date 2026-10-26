@@ -20,7 +20,7 @@ const nav: { label: Tab; icon: typeof LayoutDashboard }[] = [
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) }
+    headers: { "Content-Type": "application/json", ...(sessionStorage.getItem("restock_token") ? { Authorization: `Bearer ${sessionStorage.getItem("restock_token")}` } : {}), ...(init?.headers ?? {}) }
   });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -36,6 +36,8 @@ function StatusPill({ value }: { value: string }) {
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("Overview");
+  const [token, setToken] = useState(() => sessionStorage.getItem("restock_token") ?? "");
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
@@ -55,6 +57,7 @@ export default function App() {
   const [returnForm, setReturnForm] = useState({ product_id: "", quantity: "1", reason: "damaged", order_reference: "", customer_notes: "" });
 
   const loadData = useCallback(async () => {
+    if (!sessionStorage.getItem("restock_token")) return;
     setError("");
     try {
       const [d, p, r, i] = await Promise.all([
@@ -78,6 +81,22 @@ export default function App() {
     const timer = window.setTimeout(() => setNotice(""), 3500);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  async function login(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError("");
+    try {
+      const result = await request<{ data: { token: string } }>("/auth/login", { method: "POST", body: JSON.stringify(loginForm) });
+      sessionStorage.setItem("restock_token", result.data.token);
+      setToken(result.data.token);
+      setLoginForm({ email: "", password: "" });
+      await loadData();
+    } catch (e) { setError(e instanceof Error ? e.message : "Sign in failed."); }
+  }
+
+  async function logout() {
+    try { await request("/auth/logout", { method: "POST" }); } catch { /* Expired tokens are cleared locally as well. */ }
+    sessionStorage.removeItem("restock_token"); setToken(""); setDashboard(null);
+  }
 
   async function submitProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -149,6 +168,8 @@ export default function App() {
     { label: "Sellable units", value: dashboard.inventory.sellable, icon: Boxes, note: "Approved for sale" }
   ] : [];
 
+  if (!token) return <div className="login-screen"><div className="login-card"><div className="brand-mark login-mark"><RefreshCw size={23} /></div><div className="eyebrow">RETURNS OPERATIONS</div><h1>Welcome to ReStock</h1><p>Sign in to manage returns, inspections, and inventory.</p>{error && <div className="alert alert-error">{error}</div>}<form className="form-stack login-form" onSubmit={login}><label>Email address<input type="email" required autoComplete="username" value={loginForm.email} onChange={e => setLoginForm({ ...loginForm, email: e.target.value })} placeholder="admin@example.com" /></label><label>Password<input type="password" required autoComplete="current-password" value={loginForm.password} onChange={e => setLoginForm({ ...loginForm, password: e.target.value })} placeholder="Your password" /></label><button className="button button-primary login-submit">Sign in</button></form><small className="login-hint">Use the administrator account configured in your local environment.</small></div></div>;
+
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark"><RefreshCw size={21} /></div><div><strong>ReStock</strong><span>RETURNS OPERATIONS</span></div></div>
@@ -158,7 +179,7 @@ export default function App() {
     </aside>
 
     <main className="main">
-      <header className="topbar"><div className="crumb">Operations <span>/</span> <strong>{tab}</strong></div><div className="top-actions"><div className="api-indicator"><span className="status-dot" /> Live data</div><button className="icon-button" title="Refresh data" onClick={() => void loadData()}><RefreshCw size={17} /></button></div></header>
+      <header className="topbar"><div className="crumb">Operations <span>/</span> <strong>{tab}</strong></div><div className="top-actions"><div className="api-indicator"><span className="status-dot" /> Live data</div><button className="icon-button" title="Refresh data" onClick={() => void loadData()}><RefreshCw size={17} /></button><button className="button button-secondary" onClick={() => void logout()}>Sign out</button></div></header>
       <div className="page-content">
         <div className="page-heading"><div><div className="eyebrow">WAREHOUSE MANAGEMENT</div><h1>{tab === "Overview" ? "Operations overview" : tab}</h1><p>{tab === "Overview" ? "A clear view of returns, inspection work, and inventory health." : tab === "Products" ? "Manage the catalog of products eligible for returns." : tab === "Returns" ? "Track returned items from arrival through final disposition." : "Understand where every returned unit is held."}</p></div><div className="heading-actions"><button className="button button-secondary" onClick={() => void loadData()}><RefreshCw size={15} /> Refresh</button>{tab === "Products" && <button className="button button-primary" onClick={() => setShowProductForm(true)}>+ New product</button>}{tab === "Returns" && <button className="button button-primary" onClick={() => setShowReturnForm(true)}>+ Register return</button>}</div></div>
 
