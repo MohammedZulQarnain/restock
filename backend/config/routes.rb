@@ -6,5 +6,10 @@ Rails.application.routes.draw do
       [{ status: "ok", app: "ReStock" }.to_json]
     ]
   }
-  get "/api/v1/products", to: "api/v1/products#index"
+
+  namespace :api do
+    namespace :v1 do
+      resources :products, only: %i[index show create update destroy]
+    end
+  end
 end
