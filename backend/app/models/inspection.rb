@@ -9,13 +9,19 @@ class Inspection < ApplicationRecord
   validate :return_must_be_received_or_in_inspection
 
   def complete!
-    raise ActiveRecord::RecordInvalid, self unless valid?
-    raise ActiveRecord::RecordInvalid, self unless inspected_at.nil?
+    raise ActiveRecord::RecordInvalid.new(self) unless valid?
+    raise ActiveRecord::RecordInvalid.new(self) if inspected_at.present?
 
-    update!(inspected_at: Time.current)
-    self.return.update!(status: "inspected")
-    AuditEvent.create!(return: self.return, event_type: "inspection_completed",
-                       details: { inspection_id: id, condition: condition, functional_status: functional_status })
+    ActiveRecord::Base.transaction do
+      update!(inspected_at: Time.current)
+      self.return.update!(status: "inspected")
+      AuditEvent.create!(
+        return: self.return,
+        event_type: "inspection_completed",
+        details: { inspection_id: id, condition: condition, functional_status: functional_status }
+      )
+    end
+    self
   end
 
   private
