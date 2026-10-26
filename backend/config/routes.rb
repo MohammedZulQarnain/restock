@@ -9,6 +9,10 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      post "auth/login", to: "auth#login"
+      post "auth/logout", to: "auth#logout"
+      get "auth/me", to: "auth#me"
+      resources :users, only: %i[index create update]
       resources :products, only: %i[index show create update destroy]
       resources :returns, only: %i[index show create] do
         member do
