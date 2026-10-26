@@ -37,8 +37,10 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2.11"
-          bundler-cache: true
+          bundler-cache: false
           working-directory: backend
+      - run: bundle lock --add-platform x86_64-linux
+      - run: bundle install
       - run: bundle exec rails db:create db:migrate
       - run: bundle exec rspec
 
