@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { Activity, ArrowDownLeft, ArrowUpRight, Boxes, ClipboardCheck, LayoutDashboard, Package, RefreshCw, Search, ShieldAlert, Truck, Warehouse } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api/v1";
@@ -73,7 +74,7 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  async function submitProduct(event: React.FormEvent<HTMLFormElement>) {
+  async function submitProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true); setError("");
     try {
@@ -159,7 +160,7 @@ function ReturnTable({ rows, onReceive, busy }: { rows: ReturnRecord[]; onReceiv
   return <div className="table-wrap"><table><thead><tr><th>Return</th><th>Product</th><th>Reason</th><th>Status</th><th>Quantity</th><th>Action</th></tr></thead><tbody>{rows.map(r => <tr key={r.id}><td><div className="return-id"><strong>{r.return_number}</strong><small>{new Date(r.created_at).toLocaleDateString()}</small></div></td><td><div className="product-cell"><div><strong>{r.product?.name ?? `Product #${r.product_id}`}</strong><small>{r.product?.sku ?? "SKU unavailable"}</small></div></div></td><td>{r.reason.replaceAll("_", " ")}</td><td><StatusPill value={r.status} /></td><td>{r.quantity}</td><td>{r.status === "registered" ? <button className="small-action" disabled={busy} onClick={() => onReceive(r.id)}>Receive item</button> : <span className="muted-text">—</span>}</td></tr>)}</tbody></table>{rows.length === 0 && <EmptyState title="No returns found" text="Register a return to begin tracking its journey." />}</div>;
 }
 
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return <div className="modal-backdrop" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}><section className="modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal-heading"><h2>{title}</h2><button className="icon-button" aria-label="Close dialog" onClick={onClose}>×</button></div>{children}</section></div>;
 }
 function EmptyState({ title, text }: { title: string; text: string }) { return <div className="empty-state"><div className="empty-icon"><Package size={22} /></div><strong>{title}</strong><p>{text}</p></div>; }
