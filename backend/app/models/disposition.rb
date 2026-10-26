@@ -16,6 +16,7 @@ class Disposition < ApplicationRecord
   end
 
   def one_disposition_per_return
-    errors.add(:return, "already has a disposition") if return && return.disposition && return.disposition != self
+    existing = self.return&.disposition
+    errors.add(:return, "already has a disposition") if existing && existing != self
   end
 end
