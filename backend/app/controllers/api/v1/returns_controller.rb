@@ -1,5 +1,7 @@
 class Api::V1::ReturnsController < ApplicationController
   before_action :set_return, only: %i[show receive start_inspection create_inspection complete_inspection disposition timeline]
+  before_action -> { authorize_roles!("admin", "warehouse_operator") }, only: %i[create receive]
+  before_action -> { authorize_roles!("admin", "inspector") }, only: %i[start_inspection create_inspection complete_inspection disposition]
 
   def index
     records = Return.includes(:product, :disposition).recent_first
