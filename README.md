@@ -30,6 +30,9 @@ $env:PGUSER = "postgres"
 $env:PGPASSWORD = "your-local-postgres-password"
 bundle exec rails db:create
 bundle exec rails db:migrate
+$env:ADMIN_EMAIL = "admin@example.com"
+$env:ADMIN_PASSWORD = "choose-a-local-password"
+bundle exec rails db:seed
 bundle exec rspec
 bundle exec rails server
 ```
@@ -48,7 +51,7 @@ npm run dev
 
 Open the Vite URL shown in the terminal (normally `http://localhost:5173`). Set `VITE_API_BASE_URL` in `.env` if the backend runs elsewhere.
 
-## Core workflow
+## Authentication\n\nThe API uses expiring bearer tokens. Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your local PowerShell session before running `db:seed` to create the first administrator. Do not commit the actual values. Sign in through the frontend using those credentials. User administration is administrator-only.\n\n## Core workflow
 
 1. Create a product.
 2. Register a return for an active product.
