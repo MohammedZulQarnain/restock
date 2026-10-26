@@ -26,4 +26,4 @@ Each disposition-generated movement uses `return-disposition:<return id>` as a u
 
 ## Current limitations
 
-Authentication and role-based authorization are not yet implemented. These APIs are an MVP foundation and must not be deployed with real customer or warehouse data until authentication, authorization, rate limiting, and production security configuration are implemented and tested.
+Bearer-token authentication and basic role authorization are now implemented. This remains a portfolio MVP; add rate limiting, a security review, monitoring, and production configuration before handling real customer or warehouse data.
