@@ -1,5 +1,6 @@
 class Api::V1::ProductsController < ApplicationController
   before_action :set_product, only: %i[show update destroy]
+  before_action -> { authorize_roles!("admin", "warehouse_operator") }, only: %i[create update destroy]
 
   def index
     products = Product.all
