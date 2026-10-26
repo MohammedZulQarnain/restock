@@ -30,7 +30,7 @@ class CreateReturnWorkflow < ActiveRecord::Migration[7.1]
     add_index :inspections, :created_at
 
     create_table :dispositions do |t|
-      t.references :return, null: false, foreign_key: true
+      t.references :return, null: false, foreign_key: true, index: false
       t.references :inspection, null: false, foreign_key: true
       t.string :disposition_type, null: false
       t.string :reason, null: false
