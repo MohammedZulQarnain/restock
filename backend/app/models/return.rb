@@ -16,7 +16,7 @@ class Return < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
   validate :product_must_be_active, on: :create
 
-  scope :recent_first, -> { order(created_at: :desc) }
+  scope :recent_first, -> { order("returns.created_at DESC") }
 
   private
 
