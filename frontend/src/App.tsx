@@ -7,6 +7,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000/api
 type Product = { id: number; name: string; sku: string; category: string; active: boolean; description?: string };
 type ReturnRecord = { id: number; return_number: string; product_id: number; quantity: number; reason: string; status: string; created_at: string; product?: { name: string; sku: string }; order_reference?: string };
 type InventoryRow = { id: number; product: { id: number; name: string; sku: string }; bucket: string; quantity: number };
+type Movement = { id: number; movement_type: string; quantity_delta: number; reason: string; created_at: string; return_id?: number; product?: { name: string; sku: string } };
 type Dashboard = { returns_total: number; awaiting_receipt: number; awaiting_inspection: number; awaiting_disposition: number; completed_returns: number; inventory: { sellable: number; quarantine: number; refurbishment: number; scrapped: number }; recent_returns: ReturnRecord[] };
 
 type Tab = "Overview" | "Products" | "Returns" | "Inventory";
@@ -42,6 +43,7 @@ export default function App() {
   const [products, setProducts] = useState<Product[]>([]);
   const [returns, setReturns] = useState<ReturnRecord[]>([]);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -60,16 +62,18 @@ export default function App() {
     if (!sessionStorage.getItem("restock_token")) return;
     setError("");
     try {
-      const [d, p, r, i] = await Promise.all([
+      const [d, p, r, i, m] = await Promise.all([
         request<{ data: Dashboard }>("/dashboard"),
         request<{ data: Product[]; meta: { total: number } }>(`/products?q=${encodeURIComponent(search)}&per_page=100`),
         request<{ data: ReturnRecord[] }>(`/returns?q=${encodeURIComponent(search)}&per_page=100`),
-        request<{ data: InventoryRow[] }>(`/inventory?q=${encodeURIComponent(search)}`)
+        request<{ data: InventoryRow[] }>(`/inventory?q=${encodeURIComponent(search)}`),
+        request<{ data: Movement[] }>("/inventory/movements")
       ]);
       setDashboard(d.data);
       setProducts(p.data);
       setReturns(r.data);
       setInventory(i.data);
+      setMovements(m.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to load ReStock data.");
     }
@@ -111,7 +115,7 @@ export default function App() {
     finally { setBusy(false); }
   }
 
-  async function submitReturn(event: React.FormEvent<HTMLFormElement>) {
+  async function submitReturn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true); setError("");
     try {
@@ -197,7 +201,7 @@ export default function App() {
 
         {tab === "Returns" && <section className="panel"><div className="panel-heading"><div><h2>Return queue</h2><p>Registration, receipt, inspection, and disposition status</p></div><div className="mini-count">{returns.length} cases</div></div><ReturnTable rows={returns} onReceive={receiveReturn} onInspect={id => { setSelectedReturnId(id); setShowInspectionForm(true); }} onDisposition={id => { setSelectedReturnId(id); setShowDispositionForm(true); }} busy={busy} /></section>}
 
-        {tab === "Inventory" && <section className="panel"><div className="panel-heading"><div><h2>Inventory by disposition</h2><p>Only sellable units are eligible for sale</p></div><div className="mini-count">{inventory.length} buckets</div></div><div className="table-wrap"><table><thead><tr><th>Product</th><th>SKU</th><th>Inventory bucket</th><th>Quantity</th></tr></thead><tbody>{inventory.map(row => <tr key={row.id}><td><div className="product-cell"><div className="product-icon"><Boxes size={17} /></div><strong>{row.product.name}</strong></div></td><td className="mono">{row.product.sku}</td><td><StatusPill value={row.bucket} /></td><td><strong>{row.quantity}</strong></td></tr>)}</tbody></table>{inventory.length === 0 && <EmptyState title="Inventory is empty" text="Inventory is updated when a valid disposition is recorded." />}</div></section>}
+        {tab === "Inventory" && <section className="panel"><div className="panel-heading"><div><h2>Inventory by disposition</h2><p>Only sellable units are eligible for sale</p></div><div className="mini-count">{inventory.length} buckets</div></div><div className="table-wrap"><table><thead><tr><th>Product</th><th>SKU</th><th>Inventory bucket</th><th>Quantity</th></tr></thead><tbody>{inventory.map(row => <tr key={row.id}><td><div className="product-cell"><div className="product-icon"><Boxes size={17} /></div><strong>{row.product.name}</strong></div></td><td className="mono">{row.product.sku}</td><td><StatusPill value={row.bucket} /></td><td><strong>{row.quantity}</strong></td></tr>)}</tbody></table>{inventory.length === 0 && <EmptyState title="Inventory is empty" text="Inventory is updated when a valid disposition is recorded." />}</div></section><section className="panel movement-panel"><div className="panel-heading"><div><h2>Recent inventory movements</h2><p>Ledger of quantity changes and their reasons</p></div><div className="mini-count">{movements.length} recent</div></div><div className="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Movement</th><th>Quantity change</th><th>Reason</th><th>Return</th></tr></thead><tbody>{movements.map(m => <tr key={m.id}><td>{new Date(m.created_at).toLocaleString()}</td><td><div className="product-cell"><strong>{m.product?.name ?? "Product"}</strong><small>{m.product?.sku ?? ""}</small></div></td><td><StatusPill value={m.movement_type} /></td><td><strong>{m.quantity_delta > 0 ? "+" : ""}{m.quantity_delta}</strong></td><td>{m.reason}</td><td className="mono">{m.return_id ? `#${m.return_id}` : "—"}</td></tr>)}</tbody></table>{movements.length === 0 && <EmptyState title="No inventory movements yet" text="A movement is recorded when a disposition updates inventory." />}</div></section>}
 
         <footer className="page-footer"><span>ReStock <b>•</b> Reverse warehouse management</span><span>Prototype build · Backend API required</span></footer>
       </div>
