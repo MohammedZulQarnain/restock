@@ -5,7 +5,7 @@ Base path: `/api/v1`. Responses are JSON. Pagination defaults to 20 items and ca
 ## Health
 - `GET /health`
 
-## Products
+## Authentication\n- `POST /api/v1/auth/login` — JSON body `{ "email": "admin@example.com", "password": "..." }`; returns a bearer token and expiry.\n- `POST /api/v1/auth/logout` — revokes the current token.\n- `GET /api/v1/auth/me` — returns the current user.\n- Send `Authorization: Bearer <token>` on all protected API calls.\n- `GET /api/v1/users`, `POST /api/v1/users`, `PATCH /api/v1/users/:id` — administrator-only user management.\n\n## Products
 - `GET /api/v1/products?q=headphones&category=Audio&active=true&page=1&per_page=20`
 - `GET /api/v1/products/:id`
 - `POST /api/v1/products` — JSON body: `{ "product": { "name": "Desk Lamp", "sku": "HOME-001", "category": "Home" } }`
@@ -35,4 +35,4 @@ Supported return reasons: `damaged`, `defective`, `incorrect_item`, `unwanted`, 
 
 Validation errors use `{ "error": { "code": "VALIDATION_FAILED", "message": "...", "details": { ... } } }`. Invalid workflow transitions use `INVALID_WORKFLOW` or HTTP 409 for receipt conflicts.
 
-**Security note:** Authentication/authorization are not implemented yet. Do not expose this MVP API to untrusted networks or real business data.
+**Security note:** Authentication and basic role authorization are implemented, but this remains a portfolio MVP. Before production use, add rate limiting, token/session management suitable for multi-device use, security review, and operational monitoring.
