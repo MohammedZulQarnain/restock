@@ -1,3 +1,6 @@
+require "digest"
+require "securerandom"
+
 class User < ApplicationRecord
   has_secure_password
 
